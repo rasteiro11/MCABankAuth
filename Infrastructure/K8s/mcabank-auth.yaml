@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcabank-auth
+  labels:
+    app: mcabank-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcabank-auth
+  template:
+    metadata:
+      labels:
+        app: mcabank-auth
+    spec:
+      containers:
+        - name: mcabank-auth
+          image: rasteiro11/mcabank-auth:20250914184408
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5001
+          env:
+            - name: APP_ENV
+              value: "Production"
+            - name: APP_PORT
+              value: "5004"
+            - name: DATABASE_USER
+              value: "root"
+            - name: DATABASE_PASSWORD
+              value: "root"
+            - name: DATABASE_ADDR
+              value: "0.0.0.0:3306"
+            - name: DATABASE
+              value: "mcabank-db"
+            - name: JWT_SECRET
+              value: "mcabank-secret"
+            - name: SERVER_PORT
+              value: ":5004"
+            - name: AUTH_GRPC_SERVICE
+              value: "localhost:50051"
+            - name: PAYMENT_GRPC_SERVICE
+              value: "127.0.0.1:50053"
+            - name: CUSTOMER_SERVICE_URL
+              value: "http://127.0.0.1:5002"
+            - name: AUTH_SERVICE_URL
+              value: "http://127.0.0.1:5001/user"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcabank-auth-service
+  labels:
+    app: mcabank-auth
+spec:
+  type: NodePort
+  ports:
+    - port: 5001
+      targetPort: 5001
+      nodePort: 30089
+  selector:
+    app: mcabank-auth
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mcabank-auth-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: mcabank.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mcabank-auth-service
+                port:
+                  number: 5001
+
