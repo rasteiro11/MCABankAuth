@@ -53,7 +53,7 @@ spec:
   ports:
     - port: 5001
       targetPort: 5001
-      nodePort: 30081
+      nodePort: 30092
   selector:
     app: mcabank-auth
 
