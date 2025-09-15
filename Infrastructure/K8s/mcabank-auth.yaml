@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: mcabank-auth
-          image: rasteiro11/mcabank-auth:20250915003642
+          image: rasteiro11/mcabank-auth:20250915094135
           imagePullPolicy: Always
           ports:
             - containerPort: 5001   # HTTP REST
