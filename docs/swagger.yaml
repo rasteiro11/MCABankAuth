@@ -1,0 +1,101 @@
+basePath: /
+definitions:
+  http.loginRequest:
+    properties:
+      email:
+        example: rafael@example.com
+        type: string
+      password:
+        example: secret123
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  http.loginResponse:
+    properties:
+      expires_at:
+        example: "2025-09-14T21:00:00Z"
+        type: string
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  http.registerRequest:
+    properties:
+      email:
+        example: rafael@example.com
+        type: string
+      password:
+        example: secret123
+        type: string
+    required:
+    - email
+    - password
+    type: object
+host: localhost:5001
+info:
+  contact: {}
+  description: This is the authentication service for MCA Bank
+  title: MCA Bank Auth API
+  version: "1.0"
+paths:
+  /user/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account
+      parameters:
+      - description: Registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.registerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/http.loginResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+        "422":
+          description: Unprocessable Entity
+          schema: {}
+      summary: Register a new user
+      tags:
+      - auth
+  /user/auth/signin:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user and return a JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.loginResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+      summary: Sign in with email and password
+      tags:
+      - auth
+schemes:
+- http
+swagger: "2.0"

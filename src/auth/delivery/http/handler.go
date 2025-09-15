@@ -11,7 +11,7 @@ import (
 	"github.com/rasteiro11/PogCore/pkg/validator"
 )
 
-var AuthGroupPath = "/auth"
+var AuthGroupPath = "/user/auth"
 
 type (
 	HandlerOpt func(*handler)
@@ -41,6 +41,17 @@ var ErrNotAuthorized = errors.New("not authorized")
 
 var _ Handler = (*handler)(nil)
 
+// Login godoc
+// @Summary Sign in with email and password
+// @Description Authenticate a user and return a JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body loginRequest true "Login credentials"
+// @Success 200 {object} loginResponse
+// @Failure 400 {object} any
+// @Failure 401 {object} any
+// @Router /user/auth/signin [post]
 func (h *handler) Login(c *fiber.Ctx) error {
 	req := &loginRequest{}
 
@@ -60,6 +71,17 @@ func (h *handler) Login(c *fiber.Ctx) error {
 	return rest.NewStatusOk(c, rest.WithBody(MapUserLoginResponseToHTTP(creds)))
 }
 
+// Register godoc
+// @Summary Register a new user
+// @Description Create a new user account
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body registerRequest true "Registration data"
+// @Success 201 {object} loginResponse
+// @Failure 400 {object} any
+// @Failure 422 {object} any
+// @Router /user/auth/register [post]
 func (h *handler) Register(c *fiber.Ctx) error {
 	req := &registerRequest{}
 

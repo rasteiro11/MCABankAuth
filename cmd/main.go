@@ -1,10 +1,19 @@
+// @title MCA Bank Auth API
+// @version 1.0
+// @description This is the authentication service for MCA Bank
+// @BasePath /
+
+// @host localhost:5001
+// @schemes http
 package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	_ "github.com/rasteiro11/MCABankAuth/docs"
 	"github.com/rasteiro11/MCABankAuth/entities"
 	pbCustomer "github.com/rasteiro11/MCABankAuth/gen/proto/go"
 	"github.com/rasteiro11/MCABankAuth/pkg/security"
@@ -18,6 +27,7 @@ import (
 	"github.com/rasteiro11/PogCore/pkg/logger"
 	"github.com/rasteiro11/PogCore/pkg/server"
 	"github.com/rasteiro11/PogCore/pkg/transport/grpcserver"
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
 func main() {
@@ -31,7 +41,8 @@ func main() {
 		logger.Of(ctx).Fatalf("[main] database.Migrate() returned error: %+v\n", err)
 	}
 
-	server := server.NewServer(server.WithPrefix("/user"))
+	server := server.NewServer()
+	server.AddHandler("/swagger/*", "", http.MethodGet, fiberSwagger.WrapHandler)
 	server.Use("/*", cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowHeaders: "*",
