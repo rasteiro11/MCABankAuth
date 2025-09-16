@@ -3,50 +3,45 @@ package service
 import (
 	"context"
 	"errors"
-	"os"
-	"time"
-
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/rasteiro11/MCABankAuth/pkg/security"
+	"github.com/rasteiro11/MCABankAuth/pkg/token"
 	"github.com/rasteiro11/MCABankAuth/pkg/validator"
-	"github.com/rasteiro11/MCABankAuth/src/auth/service/models"
 	"github.com/rasteiro11/MCABankAuth/src/user/domain"
 	"github.com/rasteiro11/MCABankAuth/src/user/repository"
 	userService "github.com/rasteiro11/MCABankAuth/src/user/service"
+	"time"
 )
 
 var (
 	ErrEmailTaken         = errors.New("email already taken")
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrSignatureInvalid   = errors.New("error invalid signature")
 )
 
 type authService struct {
 	userService    userService.UserService
 	hasher         security.PasswordHasher
 	emailValidator validator.EmailValidator
+	jwtService     token.JWTService[domain.Claims]
 }
 
 var _ AuthService = (*authService)(nil)
 
-func NewAuthService(userService userService.UserService, hasher security.PasswordHasher, emailValidator validator.EmailValidator) AuthService {
+func NewAuthService(userService userService.UserService, hasher security.PasswordHasher, emailValidator validator.EmailValidator, jwtService token.JWTService[domain.Claims]) AuthService {
 	return &authService{
 		userService:    userService,
 		hasher:         hasher,
 		emailValidator: emailValidator,
+		jwtService:     jwtService,
 	}
-}
-
-type claims struct {
-	UserID uint   `json:"user_id"`
-	Email  string `json:"email"`
-	jwt.RegisteredClaims
 }
 
 func (s *authService) hashPassword(password string) (string, error) {
 	return s.hasher.Hash(password)
 }
 
-func (s *authService) Register(ctx context.Context, req *models.RegisterUserDTO) (*models.RegisterUserResponseDTO, error) {
+func (s *authService) Register(ctx context.Context, req *domain.User) (*domain.AuthSession, error) {
 	if _, err := s.userService.FindOne(ctx, &domain.User{Email: req.Email}); err == nil {
 		return nil, ErrEmailTaken
 	} else if !errors.Is(err, repository.ErrRecordNotFound) {
@@ -80,13 +75,13 @@ func (s *authService) Register(ctx context.Context, req *models.RegisterUserDTO)
 		return nil, err
 	}
 
-	return &models.RegisterUserResponseDTO{
+	return &domain.AuthSession{
 		Token:     loginResp.Token,
 		ExpiresAt: loginResp.ExpiresAt,
 	}, nil
 }
 
-func (s *authService) Login(ctx context.Context, req *domain.User) (*models.LoginResponseDTO, error) {
+func (s *authService) Login(ctx context.Context, req *domain.User) (*domain.AuthSession, error) {
 	expiresAt := time.Now().Add(15 * time.Minute)
 
 	userEntity, err := s.userService.FindOne(ctx, &domain.User{
@@ -100,7 +95,7 @@ func (s *authService) Login(ctx context.Context, req *domain.User) (*models.Logi
 		return nil, ErrInvalidCredentials
 	}
 
-	claims := &claims{
+	claims := domain.Claims{
 		UserID: userEntity.ID,
 		Email:  userEntity.Email,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -108,22 +103,22 @@ func (s *authService) Login(ctx context.Context, req *domain.User) (*models.Logi
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	token, err := s.jwtService.CreateToken(claims)
 	if err != nil {
 		return nil, err
 	}
 
-	return &models.LoginResponseDTO{
-		Token:     tokenString,
+	return &domain.AuthSession{
+		Token:     token,
 		ExpiresAt: expiresAt,
 	}, nil
 }
 
-func (s *authService) VerifyToken(tokenStr string) (*claims, error) {
-	claims := &claims{}
-	_, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("JWT_SECRET")), nil
-	})
-	return claims, err
+func (s *authService) VerifyToken(ctx context.Context, tokenStr string) (*domain.Claims, error) {
+	claims, err := s.jwtService.ParseToken(tokenStr)
+	if err != nil {
+		return nil, err
+	}
+
+	return &claims, nil
 }

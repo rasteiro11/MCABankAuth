@@ -3,14 +3,10 @@ package grpc
 import (
 	"context"
 	"errors"
-
-	"github.com/golang-jwt/jwt/v4"
 	pbCustomer "github.com/rasteiro11/MCABankAuth/gen/proto/go"
 	"github.com/rasteiro11/MCABankAuth/src/auth/service"
-	"github.com/rasteiro11/MCABankAuth/src/auth/service/models"
 	"github.com/rasteiro11/MCABankAuth/src/user/domain"
 	userService "github.com/rasteiro11/MCABankAuth/src/user/service"
-	"github.com/rasteiro11/PogCore/pkg/config"
 )
 
 type grpcServer struct {
@@ -19,8 +15,7 @@ type grpcServer struct {
 }
 
 var (
-	ErrInvalidToken     = errors.New("error invalid token")
-	ErrSignatureInvalid = errors.New("error invalid signature")
+	ErrInvalidToken = errors.New("error invalid token")
 )
 
 type Option func(*grpcServer)
@@ -55,29 +50,18 @@ func (s *grpcServer) GetUser(ctx context.Context, req *pbCustomer.GetUserRequest
 	}
 
 	return &pbCustomer.GetUserResponse{
-		Id:       int32(userDomain.ID),
-		Email:    userDomain.Email,
-		Document: userDomain.Document,
+		Id:    int32(userDomain.ID),
+		Email: userDomain.Email,
 	}, nil
 }
 
 func (s *grpcServer) VerifySession(ctx context.Context, req *pbCustomer.VerifySessionRequest) (*pbCustomer.VerifySessionResponse, error) {
-	claims := &models.Claims{}
-	token, err := jwt.ParseWithClaims(req.Token, claims, func(t *jwt.Token) (interface{}, error) {
-		return []byte(config.Instance().RequiredString("JWT_SECRET")), nil
-	})
+	token, err := s.authService.VerifyToken(ctx, req.Token)
 	if err != nil {
-		if errors.Is(err, jwt.ErrSignatureInvalid) {
-			return nil, ErrSignatureInvalid
-		}
 		return nil, err
 	}
 
-	if !token.Valid {
-		return nil, ErrSignatureInvalid
-	}
-
 	return &pbCustomer.VerifySessionResponse{
-		UserId: uint64(claims.UserID),
+		UserId: uint64(token.UserID),
 	}, nil
 }

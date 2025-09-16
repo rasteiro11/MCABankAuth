@@ -7,7 +7,7 @@ type loginRequest struct {
 	Email    string `json:"email" validate:"required" example:"rafael@example.com"`
 }
 
-type loginResponse struct {
+type authSession struct {
 	Token     string    `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
 	ExpiresAt time.Time `json:"expires_at" example:"2025-09-14T21:00:00Z"`
 }

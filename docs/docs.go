@@ -43,7 +43,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/http.loginResponse"
+                            "$ref": "#/definitions/http.authSession"
                         }
                     },
                     "400": {
@@ -85,7 +85,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/http.loginResponse"
+                            "$ref": "#/definitions/http.authSession"
                         }
                     },
                     "400": {
@@ -101,6 +101,19 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "http.authSession": {
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "type": "string",
+                    "example": "2025-09-14T21:00:00Z"
+                },
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+            }
+        },
         "http.loginRequest": {
             "type": "object",
             "required": [
@@ -115,19 +128,6 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "example": "secret123"
-                }
-            }
-        },
-        "http.loginResponse": {
-            "type": "object",
-            "properties": {
-                "expires_at": {
-                    "type": "string",
-                    "example": "2025-09-14T21:00:00Z"
-                },
-                "token": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 }
             }
         },

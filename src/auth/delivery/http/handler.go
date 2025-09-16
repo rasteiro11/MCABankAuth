@@ -48,7 +48,7 @@ var _ Handler = (*handler)(nil)
 // @Accept json
 // @Produce json
 // @Param request body loginRequest true "Login credentials"
-// @Success 200 {object} loginResponse
+// @Success 200 {object} authSession
 // @Failure 400 {object} any
 // @Failure 401 {object} any
 // @Router /user/auth/signin [post]
@@ -78,7 +78,7 @@ func (h *handler) Login(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param request body registerRequest true "Registration data"
-// @Success 201 {object} loginResponse
+// @Success 201 {object} authSession
 // @Failure 400 {object} any
 // @Failure 422 {object} any
 // @Router /user/auth/register [post]

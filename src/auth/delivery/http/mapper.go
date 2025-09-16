@@ -1,7 +1,6 @@
 package http
 
 import (
-	"github.com/rasteiro11/MCABankAuth/src/auth/service/models"
 	"github.com/rasteiro11/MCABankAuth/src/user/domain"
 )
 
@@ -12,22 +11,22 @@ func MapLoginRequestToUser(req *loginRequest) *domain.User {
 	}
 }
 
-func MapUserLoginResponseToHTTP(resp *models.LoginResponseDTO) *loginResponse {
-	return &loginResponse{
+func MapUserLoginResponseToHTTP(resp *domain.AuthSession) *authSession {
+	return &authSession{
 		Token:     resp.Token,
 		ExpiresAt: resp.ExpiresAt,
 	}
 }
 
-func MapRegisterRequestToDTO(req *registerRequest) *models.RegisterUserDTO {
-	return &models.RegisterUserDTO{
+func MapRegisterRequestToDTO(req *registerRequest) *domain.User {
+	return &domain.User{
 		Email:    req.Email,
 		Password: req.Password,
 	}
 }
 
-func MapUserRegisterResponseToHTTP(resp *models.RegisterUserResponseDTO) *loginResponse {
-	return &loginResponse{
+func MapUserRegisterResponseToHTTP(resp *domain.AuthSession) *authSession {
+	return &authSession{
 		Token:     resp.Token,
 		ExpiresAt: resp.ExpiresAt,
 	}

@@ -11,18 +11,22 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/rasteiro11/MCABankAuth/docs"
 	"github.com/rasteiro11/MCABankAuth/entities"
 	pbCustomer "github.com/rasteiro11/MCABankAuth/gen/proto/go"
 	"github.com/rasteiro11/MCABankAuth/pkg/security"
+	"github.com/rasteiro11/MCABankAuth/pkg/token"
 	"github.com/rasteiro11/MCABankAuth/pkg/validator"
 	authGrpc "github.com/rasteiro11/MCABankAuth/src/auth/delivery/grpc"
 	authHttp "github.com/rasteiro11/MCABankAuth/src/auth/delivery/http"
 	authService "github.com/rasteiro11/MCABankAuth/src/auth/service"
+	"github.com/rasteiro11/MCABankAuth/src/user/domain"
 	usersRepo "github.com/rasteiro11/MCABankAuth/src/user/repository"
 	usersService "github.com/rasteiro11/MCABankAuth/src/user/service"
+	"github.com/rasteiro11/PogCore/pkg/config"
 	"github.com/rasteiro11/PogCore/pkg/database"
 	"github.com/rasteiro11/PogCore/pkg/logger"
 	"github.com/rasteiro11/PogCore/pkg/server"
@@ -54,10 +58,11 @@ func main() {
 
 	hasher := security.NewPasswordHasher()
 	emailValidator := validator.NewEmailValidator()
+	jwtService := token.NewJWTService[domain.Claims](config.Instance().RequiredString("JWT_SECRET"), 2*time.Hour)
 
 	usersService := usersService.NewUserService(usersRepo)
 
-	authService := authService.NewAuthService(usersService, hasher, emailValidator)
+	authService := authService.NewAuthService(usersService, hasher, emailValidator, jwtService)
 
 	authGrpcService := authGrpc.NewService(authGrpc.WithAuthService(authService))
 
