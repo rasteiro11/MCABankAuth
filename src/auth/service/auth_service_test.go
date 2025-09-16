@@ -16,7 +16,6 @@ import (
 	validatorImpl "github.com/rasteiro11/MCABankAuth/pkg/validator"
 	validatorMocks "github.com/rasteiro11/MCABankAuth/pkg/validator/mocks"
 	authService "github.com/rasteiro11/MCABankAuth/src/auth/service"
-	"github.com/rasteiro11/MCABankAuth/src/auth/service/models"
 	"github.com/rasteiro11/MCABankAuth/src/user/domain"
 	userMocks "github.com/rasteiro11/MCABankAuth/src/user/mocks"
 	repo "github.com/rasteiro11/MCABankAuth/src/user/repository"
@@ -29,14 +28,14 @@ func TestAuthService(t *testing.T) {
 	userSvc := new(userMocks.UserService)
 	hasher := new(securityMocks.PasswordHasher)
 	validator := new(validatorMocks.EmailValidator)
-	jwtSvc := token.NewJWTService[models.Claims]("testsecret", 15*time.Minute)
+	jwtSvc := token.NewJWTService[domain.Claims]("testsecret", 15*time.Minute)
 
 	svc := authService.NewAuthService(userSvc, hasher, validator, jwtSvc)
 
 	t.Run("Register - email already taken", func(t *testing.T) {
 		userSvc.On("FindOne", ctx, mock.Anything).Return(&domain.User{}, nil).Once()
 
-		_, err := svc.Register(ctx, &models.RegisterUserDTO{Email: "taken@example.com", Password: "pwd"})
+		_, err := svc.Register(ctx, &domain.User{Email: "taken@example.com", Password: "pwd"})
 		assert.ErrorIs(t, err, authService.ErrEmailTaken)
 
 		userSvc.AssertExpectations(t)
@@ -46,7 +45,7 @@ func TestAuthService(t *testing.T) {
 		userSvc.On("FindOne", ctx, mock.Anything).Return(nil, repo.ErrRecordNotFound).Once()
 		validator.On("IsValid", "bad-email").Return(false).Once()
 
-		_, err := svc.Register(ctx, &models.RegisterUserDTO{Email: "bad-email", Password: "pwd"})
+		_, err := svc.Register(ctx, &domain.User{Email: "bad-email", Password: "pwd"})
 		assert.ErrorIs(t, err, validatorImpl.ErrInvalidEmail)
 
 		userSvc.AssertExpectations(t)
@@ -54,7 +53,7 @@ func TestAuthService(t *testing.T) {
 	})
 
 	t.Run("Register - success", func(t *testing.T) {
-		req := &models.RegisterUserDTO{Email: "new@example.com", Password: "pwd"}
+		req := &domain.User{Email: "new@example.com", Password: "pwd"}
 
 		userSvc.On("FindOne", ctx, mock.Anything).Return(nil, repo.ErrRecordNotFound).Once()
 		validator.On("IsValid", req.Email).Return(true).Once()
@@ -126,7 +125,7 @@ func TestAuthService(t *testing.T) {
 	})
 
 	t.Run("VerifyToken - success", func(t *testing.T) {
-		claims := models.Claims{
+		claims := domain.Claims{
 			UserID: 1,
 			Email:  "x@example.com",
 			RegisteredClaims: jwt.RegisteredClaims{
