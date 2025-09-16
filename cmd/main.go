@@ -80,8 +80,6 @@ func main() {
 
 	server.PrintRouter()
 
-	logger.Of(ctx).Debug("Testing deploy")
-
 	if err := server.Start(os.Getenv("SERVER_PORT")); err != nil {
 		logger.Of(ctx).Fatalf("[main] server.NewServer() returned error: %+v\n", err)
 	}
